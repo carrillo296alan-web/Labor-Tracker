@@ -11,15 +11,7 @@ export default function App() {
     return localStorage.getItem("material") || 500;
   });
 
-  const [workers, setWorkers] = useState(() => {
-    const saved = localStorage.getItem("workers");
-    return saved
-      ? JSON.parse(saved)
-      : [
-        { id: 1, worker: "Juan", hours: 8, rate: 50 },
-        { id: 2, worker: "Omar", hours: 8, rate: 50 },
-      ];
-  });
+  const [workers, setWorkers] = useState([]);
 
   function updateWorkers(id, patch) {
     setWorkers((prev) =>
@@ -27,22 +19,45 @@ export default function App() {
     );
   }
 
-  function addWorker() {
-    setWorkers((prev) => {
-      const nextId =
-        prev.length === 0 ? 1 : Math.max(...prev.map((w) => w.id)) + 1;
-
-      return [...prev, { id: nextId, worker: "", hours: 0, rate: 0 }];
+  async function addWorker() {
+    const res = await fetch("http://localhost:3001/workers", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        worker: "",
+        hours: 0,
+        rate: 0,
+      }),
     });
+
+    const newWorker = await res.json();
+
+    setWorkers((prev) => [...prev, newWorker]);
   }
+
 
   function removeWorker(id) {
     setWorkers((prev) => prev.filter((w) => w.id !== id));
   }
 
+  // loading workers into array from server
+  useEffect(() => {
+    async function loadWorkers() {
+      const res = await fetch("http://localhost:3001/workers");
+      const data = await res.json();
+      setWorkers(data);
+    }
+
+    loadWorkers();
+  }, []);
+
+  /*
   useEffect(() => {
     localStorage.setItem("workers", JSON.stringify(workers));
   }, [workers]);
+  */
 
   useEffect(() => {
     localStorage.setItem("jobName", jobName);
